@@ -1,9 +1,13 @@
+// src/redux/store.js
+
 import { configureStore } from '@reduxjs/toolkit';
-// Import your reducers here
+import materialReducer from './materialSlice';
+import transformReducer from './transformSlice';
 
 const store = configureStore({
   reducer: {
-    // Add your reducers here
+    material: materialReducer,
+    transform: transformReducer,
   },
 });
 
