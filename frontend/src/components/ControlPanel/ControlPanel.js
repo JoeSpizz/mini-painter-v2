@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { moveModel, setModelRotation, setUniformScale, resetTransform, toggleLock } from '../../redux/transformSlice';
-import { FaLock, FaLockOpen } from 'react-icons/fa';
+import { moveModel, setModelRotation, setUniformScale, resetTransform } from '../../redux/transformSlice';
 import * as THREE from 'three';
 
 function ControlPanel() {
@@ -13,11 +12,8 @@ function ControlPanel() {
   const position = useSelector((state) => state.transform.position);
   const rotation = useSelector((state) => state.transform.rotation);
   const scale = useSelector((state) => state.transform.scale);
-  const isLocked = useSelector((state) => state.transform.isLocked);
   
-  const handleLockToggle = () => {
-    dispatch(toggleLock());
-  };
+ 
   
   return (
     <div>
@@ -27,16 +23,7 @@ function ControlPanel() {
           onClick={() => dispatch(resetTransform())}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
         >
-          Reset Transform
-        </button>
-
-        <button
-          onClick={handleLockToggle}
-          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded shadow flex items-center"
-          title={isLocked ? "Unlock Camera" : "Lock Camera"}
-        >
-          {isLocked ? <FaLock /> : <FaLockOpen />}
-          <span className="ml-2">{isLocked ? "Paint Mode" : "Move Mode"}</span>
+          Reset Model Positioning
         </button>
       </div>
       {/* Movement Sliders */}
