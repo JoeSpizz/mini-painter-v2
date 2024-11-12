@@ -25,9 +25,9 @@ function ColorPicker() {
   };
 
   return (
-    <div className="color-picker p-4 bg-white rounded shadow-md">
-      <h2 className="text-xl font-semibold mb-2">Select Material Properties</h2>
-      
+    <div className="flex flex-col items-center text-center color-picker p-4 bg-white rounded shadow-md">
+      <h2 className="text-xl font-semibold mb-2">Select Model Properties</h2>
+      <p> This will erase all paint!!!</p>
       {/* Color Picker */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Color</label>

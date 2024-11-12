@@ -9,7 +9,6 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { useLoader } from '@react-three/fiber';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { DoubleSide, Color, Vector3 } from 'three';
 import BrushPreview from '../BrushPreview/BrushPreview';
@@ -18,12 +17,44 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'; // Imp
 import * as THREE from 'three';
 import { RBush3D } from 'rbush-3d';
 import throttle from 'lodash/throttle';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 
 const ModelViewer = forwardRef(
-  ({ modelPath, brushColor, brushSize, brushOpacity, isPaintMode, onHistoryChange }, ref) => {
-    const geometry = useLoader(STLLoader, modelPath);
+  ({ modelPath, modelType, brushColor, brushSize, brushOpacity, isPaintMode, onHistoryChange }, ref) => {
     const meshRef = useRef();
+    const [geometry, setGeometry] = useState(null);
+
+    useEffect(() => {
+      let loader;
+      if (modelType === 'stl') {
+        loader = new STLLoader();
+        loader.load(modelPath, (geom) => {
+          geom.center();
+          geom.computeVertexNormals();
+          geom.computeBoundingSphere();  // Compute bounding volumes
+          geom.computeBoundingBox();
+          if (geom.boundingSphere) {
+            setGeometry(geom);
+          } else {
+            console.warn("Bounding sphere not computed, geometry not set.");
+          }
+        });
+      } else if (modelType === 'gltf') {
+        loader = new GLTFLoader();
+        loader.parse(modelPath, null, (gltf) => {
+          const geom = gltf.scene.children[0].geometry;
+          geom.computeBoundingSphere();
+          geom.computeBoundingBox();
+          if (geom.boundingSphere) {
+            setGeometry(geom);
+          } else {
+            console.warn("Bounding sphere not computed, geometry not set.");
+          }
+        });
+      }
+    }, [modelPath, modelType]);
+    
 
     // Material Properties from Redux
     const { color, metalness, roughness } = useSelector(
@@ -302,35 +333,33 @@ const exportModel = () => {
     URL.revokeObjectURL(url);
   });
 };
+return geometry && geometry.boundingSphere ? (
+  <>
+    <mesh
+      ref={meshRef}
+      geometry={geometry}
+      castShadow
+      receiveShadow
+      position={[position.x, position.y, position.z]}
+      rotation={[rotation.x, rotation.y, rotation.z]}
+      scale={[scale.x, scale.y, scale.z]}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
+      <meshStandardMaterial
+        vertexColors={true}
+        metalness={metalness}
+        roughness={roughness}
+        side={DoubleSide}
+      />
+    </mesh>
+    {isPaintMode && <BrushPreview position={brushPosition} brushSize={brushSize} />}
+  </>
+) : null;
 
-    return (
-      <>
-        <mesh
-          ref={meshRef}
-          geometry={geometry}
-          castShadow
-          receiveShadow
-          position={[position.x, position.y, position.z]}
-          rotation={[rotation.x, rotation.y, rotation.z]}
-          scale={[scale.x, scale.y, scale.z]}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-        >
-          <meshStandardMaterial
-            vertexColors={true}
-            metalness={metalness}
-            roughness={roughness}
-            side={DoubleSide}
-          />
-        </mesh>
-
-        {/* Brush Preview */}
-        {isPaintMode && <BrushPreview position={brushPosition} brushSize={brushSize} />}
-      </>
-    );
-  }
-);
+        }
+      );
 
 export default ModelViewer;

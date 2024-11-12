@@ -9,15 +9,13 @@ function FileUpload({ onFileUpload }) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const arrayBuffer = e.target.result;
-
+  
         if (file.name.endsWith('.stl')) {
           const blob = new Blob([arrayBuffer], { type: 'application/sla' });
           const url = URL.createObjectURL(blob);
           onFileUpload(url, 'stl');
         } else if (file.name.endsWith('.gltf') || file.name.endsWith('.glb')) {
-          const blob = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
-          const url = URL.createObjectURL(blob);
-          onFileUpload(url, 'gltf');
+          onFileUpload(arrayBuffer, 'gltf'); // Pass array buffer directly for GLTF
         } else {
           alert('Please upload a valid .STL or .GLTF file.');
         }
@@ -25,6 +23,7 @@ function FileUpload({ onFileUpload }) {
       reader.readAsArrayBuffer(file);
     }
   };
+  
 
   return (
     <div className="file-upload">

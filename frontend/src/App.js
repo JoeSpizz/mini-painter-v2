@@ -33,14 +33,20 @@ function App() {
   const handleFileUpload = (url, type) => {
     setModelPath(url);
     setModelType(type);
+  
     if (modelViewerRef.current) {
-      modelViewerRef.current.history.current = [];
-      modelViewerRef.current.redoHistory.current = [];
+      if (modelViewerRef.current.history) {
+        modelViewerRef.current.history.current = [];
+      }
+      if (modelViewerRef.current.redoHistory) {
+        modelViewerRef.current.redoHistory.current = [];
+      }
       setCanUndo(false);
       setCanRedo(false);
     }
     console.log('New model loaded:', url);
   };
+  
 
   const handleResetMaterial = () => {
     dispatch(resetMaterial());
@@ -158,7 +164,7 @@ function App() {
               />
             </Canvas>
 
-            <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="flex flex-col items-center z-10">
               <button
                 onClick={() => modelViewerRef.current.exportModel()}
                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
