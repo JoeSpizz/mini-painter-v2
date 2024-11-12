@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ModelViewer from './components/ModelViewer/ModelViewer';
 import ColorPicker from './components/ColorPicker/ColorPicker';
 import ControlPanel from './components/ControlPanel/ControlPanel';
@@ -12,42 +12,74 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Color } from 'three';
 
+// src/App.js
+
 function App() {
   const [modelPath, setModelPath] = useState(null);
   const dispatch = useDispatch();
 
   // Brush State
   const [brushColor, setBrushColor] = useState(new Color('#FF0000'));
-  const [brushSize, setBrushSize] = useState(0.1); // Start with smallest size
-  const [brushOpacity, setBrushOpacity] = useState(0.5); 
+  const [brushSize, setBrushSize] = useState(0.1);
+  const [brushOpacity, setBrushOpacity] = useState(0.5);
 
   // Mode State
   const [isPaintMode, setIsPaintMode] = useState(false);
 
+  const modelViewerRef = useRef();
+
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
   const handleFileUpload = (url) => {
     setModelPath(url);
+    if (modelViewerRef.current) {
+      modelViewerRef.current.history.current = [];
+      modelViewerRef.current.redoHistory.current = [];
+      setCanUndo(false);
+      setCanRedo(false);
+    }
+    console.log('New model loaded:', url);
   };
 
   const handleResetMaterial = () => {
     dispatch(resetMaterial());
+    if (modelViewerRef.current) {
+      modelViewerRef.current.history.current = [];
+      modelViewerRef.current.redoHistory.current = [];
+      setCanUndo(false);
+      setCanRedo(false);
+    }
+    console.log('Material reset and history cleared');
   };
 
   const toggleMode = () => {
     setIsPaintMode((prev) => !prev);
+    console.log('Mode toggled:', isPaintMode ? 'Move' : 'Paint');
   };
 
-  const handleExportModel = () => {
-    // Implement export logic here or pass it down as a prop to ModelViewer
-    // For example, you can use a ref to ModelViewer and call handleExportModel
-    // Alternatively, manage export within ModelViewer based on state
-    alert('Export functionality not implemented yet.');
+  const handleUndo = () => {
+    if (modelViewerRef.current) {
+      modelViewerRef.current.undo();
+    }
+  };
+
+  const handleRedo = () => {
+    if (modelViewerRef.current) {
+      modelViewerRef.current.redo();
+    }
+  };
+
+  // Callback for history changes
+  const handleHistoryChange = (undoAvailable, redoAvailable) => {
+    setCanUndo(undoAvailable);
+    setCanRedo(redoAvailable);
   };
 
   return (
     <div className="App bg-gray-100 min-h-screen flex flex-row relative">
-      {/* Left Sidebar: Brush Controls and Color Picker */}
       <div className="w-72 bg-white bg-opacity-90 p-6 overflow-y-auto shadow-lg">
-      <button
+        <button
           onClick={toggleMode}
           className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow w-full"
         >
@@ -61,6 +93,20 @@ function App() {
           brushOpacity={brushOpacity}
           setBrushOpacity={setBrushOpacity}
         />
+        <button
+          onClick={handleUndo}
+          className="mt-4 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded shadow w-full"
+          disabled={!canUndo}
+        >
+          Undo
+        </button>
+        <button
+          onClick={handleRedo}
+          className="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow w-full"
+          disabled={!canRedo}
+        >
+          Redo
+        </button>
         <ColorPicker />
         <button
           onClick={handleResetMaterial}
@@ -68,38 +114,35 @@ function App() {
         >
           Reset Material
         </button>
-
       </div>
 
-      {/* Center: Model Viewer and File Upload */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-4xl mb-4">
-          <h1 className="text-3xl font-bold mb-4 text-center">Mini Painting Simulator</h1>
+          <h1 className="text-3xl font-bold mb-4 text-center">
+            Mini Painting Simulator
+          </h1>
           <FileUpload onFileUpload={handleFileUpload} />
         </div>
         {modelPath && (
           <div className="w-full h-full relative">
-            {/* R3F Canvas */}
             <Canvas shadows style={{ background: 'white', height: '600px' }}>
-              {/* Perspective Camera */}
               <PerspectiveCamera makeDefault position={[0, 0, 100]} fov={75} />
 
-              {/* Lighting */}
               <ambientLight intensity={2} />
               <directionalLight position={[10, 10, 10]} intensity={4} />
               <directionalLight position={[-10, -10, -10]} intensity={4} />
               <pointLight position={[0, 50, 0]} intensity={2.0} />
 
-              {/* Model Viewer */}
               <ModelViewer
+                ref={modelViewerRef}
                 modelPath={modelPath}
                 brushColor={brushColor}
                 brushSize={brushSize}
                 brushOpacity={brushOpacity}
                 isPaintMode={isPaintMode}
+                onHistoryChange={handleHistoryChange}
               />
 
-              {/* OrbitControls */}
               <OrbitControls
                 enablePan={!isPaintMode}
                 enableZoom={!isPaintMode}
@@ -114,10 +157,8 @@ function App() {
               />
             </Canvas>
 
-            {/* Export Button */}
             <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-10">
               <button
-                onClick={handleExportModel}
                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
               >
                 Export Painted Model
@@ -126,9 +167,9 @@ function App() {
           </div>
         )}
       </div>
-        <div className="w-72 bg-white bg-opacity-90 p-6 overflow-y-auto shadow-lg">
+      <div className="w-72 bg-white bg-opacity-90 p-6 overflow-y-auto shadow-lg">
         <ControlPanel />
-      </div> 
+      </div>
     </div>
   );
 }
