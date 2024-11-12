@@ -42,17 +42,23 @@ const ModelViewer = forwardRef(
         });
       } else if (modelType === 'gltf') {
         loader = new GLTFLoader();
-        loader.parse(modelPath, null, (gltf) => {
-          const geom = gltf.scene.children[0].geometry;
-          geom.computeBoundingSphere();
-          geom.computeBoundingBox();
-          if (geom.boundingSphere) {
-            setGeometry(geom);
-          } else {
-            console.warn("Bounding sphere not computed, geometry not set.");
-          }
-        });
+        loader.load(
+          modelPath, // Pass URL directly here
+          (gltf) => {
+            const geom = gltf.scene.children[0].geometry;
+            geom.computeBoundingSphere();
+            geom.computeBoundingBox();
+            if (geom.boundingSphere) {
+              setGeometry(geom);
+            } else {
+              console.warn("Bounding sphere not computed, geometry not set.");
+            }
+          },
+          undefined,
+          (error) => console.error("GLTF loading error:", error) // Added error handling
+        );
       }
+      
     }, [modelPath, modelType]);
     
 
@@ -124,7 +130,8 @@ const ModelViewer = forwardRef(
         if (!geometry.hasAttribute('normal')) {
           geometry.computeVertexNormals();
         }
-
+    
+        // Only initialize vertex colors if they don't exist already
         if (!geometry.hasAttribute('color')) {
           const colors = [];
           const defaultColor = new Color(color);
@@ -135,10 +142,11 @@ const ModelViewer = forwardRef(
             'color',
             new THREE.Float32BufferAttribute(colors, 3)
           );
+          geometry.attributes.color.needsUpdate = true;
         }
-        geometry.attributes.color.needsUpdate = true;
       }
     }, [geometry, color]);
+    
 
     // Build RBush3D spatial index
     useEffect(() => {

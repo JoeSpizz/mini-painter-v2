@@ -15,8 +15,11 @@ function FileUpload({ onFileUpload }) {
           const url = URL.createObjectURL(blob);
           onFileUpload(url, 'stl');
         } else if (file.name.endsWith('.gltf') || file.name.endsWith('.glb')) {
-          onFileUpload(arrayBuffer, 'gltf'); // Pass array buffer directly for GLTF
-        } else {
+          const blob = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
+          const url = URL.createObjectURL(blob);
+          onFileUpload(url, 'gltf'); // Pass URL to `onFileUpload`
+        }
+        else {
           alert('Please upload a valid .STL or .GLTF file.');
         }
       };
