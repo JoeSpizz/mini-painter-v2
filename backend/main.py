@@ -18,20 +18,12 @@ app.add_middleware(
 SAVE_DIR = "saved_models"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-@app.post("/save_model/")
-async def save_model(model: UploadFile = File(...), filename: str = Query(None)):
-    try:
-        # Ensure the filename has the .ply extension
-        ply_filename = f"{filename}.ply" if not filename.endswith(".ply") else filename
-        model_path = os.path.join(SAVE_DIR, ply_filename)
-
-        with open(model_path, "wb") as f:
-            content = await model.read()
-            f.write(content)
-
-        return {"message": "Model saved successfully", "filename": ply_filename}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@app.post("/save-model/")
+async def save_model(file: UploadFile = File(...)):
+    file_location = os.path.join(SAVE_DIR, file.filename)
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+    return {"info": f"Model saved at {file_location}"}
 
 @app.get("/list_models/")
 def list_models():
@@ -47,6 +39,14 @@ def download_model(filename: str):
         raise HTTPException(status_code=404, detail="Model not found")
 
     return FileResponse(model_path, media_type="application/octet-stream", filename=f"{filename}.ply")
+
+@app.get("/load-model/{model_name}")
+async def load_model(model_name: str):
+    file_location = os.path.join(SAVE_DIR, model_name)
+    if os.path.exists(file_location):
+        return FileResponse(file_location)
+    return {"error": "Model not found"}
+
 
 @app.delete("/delete_model/{filename}")
 def delete_model(filename: str):

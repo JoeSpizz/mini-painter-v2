@@ -12,10 +12,9 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Color } from 'three';
 
-// src/App.js
-
 function App() {
   const [modelPath, setModelPath] = useState(null);
+  const [modelType, setModelType] = useState(null);
   const dispatch = useDispatch();
 
   // Brush State
@@ -31,8 +30,9 @@ function App() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  const handleFileUpload = (url) => {
+  const handleFileUpload = (url, type) => {
     setModelPath(url);
+    setModelType(type);
     if (modelViewerRef.current) {
       modelViewerRef.current.history.current = [];
       modelViewerRef.current.redoHistory.current = [];
@@ -136,6 +136,7 @@ function App() {
               <ModelViewer
                 ref={modelViewerRef}
                 modelPath={modelPath}
+                modelType={modelType}
                 brushColor={brushColor}
                 brushSize={brushSize}
                 brushOpacity={brushOpacity}
@@ -159,6 +160,7 @@ function App() {
 
             <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-10">
               <button
+                onClick={() => modelViewerRef.current.exportModel()}
                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
               >
                 Export Painted Model

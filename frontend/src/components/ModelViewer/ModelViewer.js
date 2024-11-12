@@ -14,9 +14,11 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { DoubleSide, Color, Vector3 } from 'three';
 import BrushPreview from '../BrushPreview/BrushPreview';
 import { useSelector } from 'react-redux';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'; // Import directly without 'THREE.'
 import * as THREE from 'three';
 import { RBush3D } from 'rbush-3d';
 import throttle from 'lodash/throttle';
+
 
 const ModelViewer = forwardRef(
   ({ modelPath, brushColor, brushSize, brushOpacity, isPaintMode, onHistoryChange }, ref) => {
@@ -82,6 +84,7 @@ const ModelViewer = forwardRef(
       },
       canUndo: () => history.current.length > 0,
       canRedo: () => redoHistory.current.length > 0,
+      exportModel,
     }));
 
     useEffect(() => {
@@ -284,6 +287,21 @@ const ModelViewer = forwardRef(
       }
       setIsPainting(false);
     };
+
+const exportModel = () => {
+  const exporter = new GLTFExporter(); // No 'THREE.' prefix needed
+  exporter.parse(meshRef.current, (gltf) => {
+    const blob = new Blob([JSON.stringify(gltf)], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'painted_model.gltf';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+};
 
     return (
       <>

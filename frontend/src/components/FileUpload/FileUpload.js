@@ -1,25 +1,34 @@
+// src/components/FileUpload/FileUpload.js
+
 import React from 'react';
 
 function FileUpload({ onFileUpload }) {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (file && file.name.endsWith('.stl')) {
+    if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const arrayBuffer = e.target.result;
-        const blob = new Blob([arrayBuffer], { type: 'application/sla' });
-        const url = URL.createObjectURL(blob);
-        onFileUpload(url);
+
+        if (file.name.endsWith('.stl')) {
+          const blob = new Blob([arrayBuffer], { type: 'application/sla' });
+          const url = URL.createObjectURL(blob);
+          onFileUpload(url, 'stl');
+        } else if (file.name.endsWith('.gltf') || file.name.endsWith('.glb')) {
+          const blob = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
+          const url = URL.createObjectURL(blob);
+          onFileUpload(url, 'gltf');
+        } else {
+          alert('Please upload a valid .STL or .GLTF file.');
+        }
       };
       reader.readAsArrayBuffer(file);
-    } else {
-      alert('Please upload a valid .STL file.');
     }
   };
 
   return (
     <div className="file-upload">
-      <input type="file" accept=".stl" onChange={handleFileChange} />
+      <input type="file" accept=".stl,.gltf,.glb" onChange={handleFileChange} />
     </div>
   );
 }
