@@ -19,9 +19,20 @@ import { RBush3D } from 'rbush-3d';
 import throttle from 'lodash/throttle';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-
 const ModelViewer = forwardRef(
-  ({ modelPath, modelType, brushColor, brushSize, brushOpacity, isPaintMode, onHistoryChange }, ref) => {
+  (
+    {
+      modelPath,
+      modelType,
+      brushColor,
+      brushSize,
+      brushOpacity,
+      isPaintMode,
+      onHistoryChange,
+      onColorUsed, // **Receive Callback**
+    },
+    ref
+  ) => {
     const meshRef = useRef();
     const [geometry, setGeometry] = useState(null);
     const [isGLTFWithColors, setIsGLTFWithColors] = useState(false);
@@ -49,7 +60,7 @@ const ModelViewer = forwardRef(
             console.warn("Bounding sphere not computed, geometry not set.");
           }
         });
-      }else if (modelType === 'gltf') {
+      } else if (modelType === 'gltf') {
         loader = new GLTFLoader();
         loader.load(
           modelPath,
@@ -67,10 +78,7 @@ const ModelViewer = forwardRef(
           (error) => console.error("GLTF loading error:", error)
         );
       }
-      
-      
     }, [modelPath, modelType]);
-    
 
     // Material Properties from Redux
     const { color, metalness, roughness } = useSelector(
@@ -156,8 +164,6 @@ const ModelViewer = forwardRef(
         }
       }
     }, [geometry, color]);
-    
-    
 
     // Build RBush3D spatial index
     useEffect(() => {
@@ -204,8 +210,6 @@ const ModelViewer = forwardRef(
         console.log('Material color updated for all vertices');
       }
     }, [color, geometry, isGLTFWithColors]);
-    
-    
 
     // Update inverse matrix whenever mesh transformation changes
     useEffect(() => {
@@ -289,9 +293,14 @@ const ModelViewer = forwardRef(
 
           colorAttribute.needsUpdate = true;
           console.log('Paint applied:', nearestPoints.length, 'vertices');
+
+          // **New: Invoke onColorUsed after painting**
+          if (onColorUsed) {
+            onColorUsed(brushColor);
+          }
         }
       },
-      [rbushTree, brushColor, brushOpacity, brushSize, inverseMatrix, isPaintMode, tmpVertex]
+      [rbushTree, brushColor, brushOpacity, brushSize, inverseMatrix, isPaintMode, tmpVertex, onColorUsed]
     );
 
     const throttledPaint = useMemo(() => throttle(paint, 30), [paint]);
@@ -341,47 +350,44 @@ const ModelViewer = forwardRef(
     };
 
 
-// src/components/ModelViewer/ModelViewer.js
+    // src/components/ModelViewer/ModelViewer.js
 
-const exportModel = (filePath) => {
-  console.log("exportModel called with path:", filePath);
-  const exporter = new GLTFExporter();
-  exporter.parse(meshRef.current, async (gltf) => {
-    const data = JSON.stringify(gltf);
-    await window.electron.saveFile(filePath, data);
-  });
-};
+    const exportModel = (filePath) => {
+      console.log("exportModel called with path:", filePath);
+      const exporter = new GLTFExporter();
+      exporter.parse(meshRef.current, async (gltf) => {
+        const data = JSON.stringify(gltf);
+        await window.electron.saveFile(filePath, data);
+      });
+    };
 
+    return geometry && geometry.boundingSphere ? (
+      <>
+        <mesh
+          ref={meshRef}
+          geometry={geometry}
+          castShadow
+          receiveShadow
+          position={[position.x, position.y, position.z]}
+          rotation={[rotation.x, rotation.y, rotation.z]}
+          scale={[scale.x, scale.y, scale.z]}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        >
+          <meshStandardMaterial
+            vertexColors={true}
+            metalness={metalness}
+            roughness={roughness}
+            color={new Color(color)}
+            side={DoubleSide}
+          />
 
-    
-    
-return geometry && geometry.boundingSphere ? (
-  <>
-    <mesh
-      ref={meshRef}
-      geometry={geometry}
-      castShadow
-      receiveShadow
-      position={[position.x, position.y, position.z]}
-      rotation={[rotation.x, rotation.y, rotation.z]}
-      scale={[scale.x, scale.y, scale.z]}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-    >
-      <meshStandardMaterial
-        vertexColors={true}
-        metalness={metalness}
-        roughness={roughness}
-        color={new Color(color)}
-        side={DoubleSide}
-      />
-
-    </mesh>
-    {isPaintMode && <BrushPreview position={brushPosition} brushSize={brushSize} />}
-  </>
-) : null;
+        </mesh>
+        {isPaintMode && <BrushPreview position={brushPosition} brushSize={brushSize} />}
+      </>
+    ) : null;
 
         }
       );

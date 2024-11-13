@@ -18,13 +18,50 @@ function App() {
   const [modelPath, setModelPath] = useState(null);
   const [modelType, setModelType] = useState(null);
   const dispatch = useDispatch();
+  
+  // Brush States
   const [brushColor, setBrushColor] = useState(new Color('#FF0000'));
   const [brushSize, setBrushSize] = useState(1.5);
   const [brushOpacity, setBrushOpacity] = useState(0.75);
   const [isPaintMode, setIsPaintMode] = useState(false);
+  
   const modelViewerRef = useRef();
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  
+  // **New: Color History State**
+  const [colorHistory, setColorHistory] = useState([new Color('#FF0000').getStyle()]); // Initialize with initial color
+
+  // **New: Function to Add Color to History**
+  const addColorToHistory = (newColor) => {
+    const colorLower = newColor.toLowerCase();
+    setColorHistory((prev) => {
+      // Remove the color if it already exists
+      const filtered = prev.filter((c) => c.toLowerCase() !== colorLower);
+      // Add to the front
+      const updated = [colorLower, ...filtered];
+      // Limit to 20
+      return updated.slice(0, 20);
+    });
+  };
+
+  // **New: Callback when a color is used in painting**
+  const handleColorUsed = (color) => {
+    addColorToHistory(color.getStyle());
+  };
+
+  // **Modified Brush Color Setter: No longer adds to history**
+  const handleSetBrushColor = (color) => {
+    setBrushColor(color);
+    // Removed: addColorToHistory(color.getStyle());
+  };
+
+  // **Function to Select Color from History**
+  const selectColorFromHistory = (color) => {
+    const newColor = new Color(color);
+    setBrushColor(newColor);
+    // Do not add to history here since it's a selection, not a usage
+  };
 
   const handleFileUpload = (url, type) => {
     setModelPath(url);
@@ -112,6 +149,7 @@ function App() {
           brushOpacity={brushOpacity}
           isPaintMode={isPaintMode}
           onHistoryChange={handleHistoryChange}
+          onColorUsed={handleColorUsed} // **Pass Callback to ModelViewer**
         />
         <OrbitControls
           enablePan={!isPaintMode}
@@ -128,11 +166,13 @@ function App() {
           </div>
           <BrushControls
             brushColor={brushColor}
-            setBrushColor={setBrushColor}
+            setBrushColor={handleSetBrushColor}
             brushSize={brushSize}
             setBrushSize={setBrushSize}
             brushOpacity={brushOpacity}
             setBrushOpacity={setBrushOpacity}
+            colorHistory={colorHistory} // **Pass Color History**
+            selectColorFromHistory={selectColorFromHistory} // **Pass Selection Function**
           />
         </div>
       </Draggable>
