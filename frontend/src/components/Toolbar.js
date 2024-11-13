@@ -51,7 +51,7 @@ const handleExport = async () => {
         Redo
       </button>
       <button onClick={handleExport} className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded shadow">
-        Export Painted Model
+        Export Model
       </button>
     </div>
   );
