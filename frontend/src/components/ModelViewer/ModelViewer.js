@@ -24,6 +24,8 @@ const ModelViewer = forwardRef(
   ({ modelPath, modelType, brushColor, brushSize, brushOpacity, isPaintMode, onHistoryChange }, ref) => {
     const meshRef = useRef();
     const [geometry, setGeometry] = useState(null);
+    const [isGLTFWithColors, setIsGLTFWithColors] = useState(false);
+
 
     useEffect(() => {
       let loader;
@@ -40,24 +42,25 @@ const ModelViewer = forwardRef(
             console.warn("Bounding sphere not computed, geometry not set.");
           }
         });
-      } else if (modelType === 'gltf') {
+      }else if (modelType === 'gltf') {
         loader = new GLTFLoader();
         loader.load(
-          modelPath, // Pass URL directly here
+          modelPath,
           (gltf) => {
-            const geom = gltf.scene.children[0].geometry;
-            geom.computeBoundingSphere();
-            geom.computeBoundingBox();
-            if (geom.boundingSphere) {
+            const child = gltf.scene.children[0];
+            if (child.geometry) {
+              const geom = child.geometry;
+              geom.computeBoundingSphere();
+              geom.computeBoundingBox();
               setGeometry(geom);
-            } else {
-              console.warn("Bounding sphere not computed, geometry not set.");
+              setIsGLTFWithColors(geom.hasAttribute('color')); // Set flag based on vertex colors
             }
           },
           undefined,
-          (error) => console.error("GLTF loading error:", error) // Added error handling
+          (error) => console.error("GLTF loading error:", error)
         );
       }
+      
       
     }, [modelPath, modelType]);
     
@@ -131,7 +134,7 @@ const ModelViewer = forwardRef(
           geometry.computeVertexNormals();
         }
     
-        // Only initialize vertex colors if they don't exist already
+        // Initialize vertex colors only if they don't exist
         if (!geometry.hasAttribute('color')) {
           const colors = [];
           const defaultColor = new Color(color);
@@ -146,6 +149,7 @@ const ModelViewer = forwardRef(
         }
       }
     }, [geometry, color]);
+    
     
 
     // Build RBush3D spatial index
@@ -181,7 +185,7 @@ const ModelViewer = forwardRef(
 
     // Update vertex colors when material color changes
     useEffect(() => {
-      if (geometry && geometry.hasAttribute('color')) {
+      if (geometry && geometry.hasAttribute('color') && !isGLTFWithColors) {
         const colors = geometry.attributes.color.array;
         const updatedColor = new Color(color);
         for (let i = 0; i < colors.length; i += 3) {
@@ -192,7 +196,9 @@ const ModelViewer = forwardRef(
         geometry.attributes.color.needsUpdate = true;
         console.log('Material color updated for all vertices');
       }
-    }, [color, geometry]);
+    }, [color, geometry, isGLTFWithColors]);
+    
+    
 
     // Update inverse matrix whenever mesh transformation changes
     useEffect(() => {
@@ -327,20 +333,21 @@ const ModelViewer = forwardRef(
       setIsPainting(false);
     };
 
-const exportModel = () => {
-  const exporter = new GLTFExporter(); // No 'THREE.' prefix needed
-  exporter.parse(meshRef.current, (gltf) => {
-    const blob = new Blob([JSON.stringify(gltf)], { type: 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'painted_model.gltf';
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-};
+    const exportModel = () => {
+      const exporter = new GLTFExporter();
+      exporter.parse(meshRef.current, (gltf) => {
+        const blob = new Blob([JSON.stringify(gltf)], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'painted_model.gltf';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+      }, { binary: false }); // Ensure binary is set appropriately
+    };
+    
 return geometry && geometry.boundingSphere ? (
   <>
     <mesh
@@ -360,8 +367,10 @@ return geometry && geometry.boundingSphere ? (
         vertexColors={true}
         metalness={metalness}
         roughness={roughness}
+        color={new Color(1, 1, 1)} // Set base color to white
         side={DoubleSide}
       />
+
     </mesh>
     {isPaintMode && <BrushPreview position={brushPosition} brushSize={brushSize} />}
   </>
