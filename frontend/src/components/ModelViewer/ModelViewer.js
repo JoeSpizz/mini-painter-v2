@@ -367,7 +367,7 @@ return geometry && geometry.boundingSphere ? (
         vertexColors={true}
         metalness={metalness}
         roughness={roughness}
-        color={new Color(1, 1, 1)} // Set base color to white
+        color={new Color(color)}
         side={DoubleSide}
       />
 
