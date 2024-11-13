@@ -26,7 +26,14 @@ const ModelViewer = forwardRef(
     const [geometry, setGeometry] = useState(null);
     const [isGLTFWithColors, setIsGLTFWithColors] = useState(false);
 
-
+    useEffect(() => {
+      if (window.electron && window.electron.saveFile) {
+        console.log("Electron saveFile is available");
+      } else {
+        console.error("Electron saveFile is not available");
+      }
+    }, []);
+    
     useEffect(() => {
       let loader;
       if (modelType === 'stl') {
@@ -333,20 +340,20 @@ const ModelViewer = forwardRef(
       setIsPainting(false);
     };
 
-    const exportModel = () => {
-      const exporter = new GLTFExporter();
-      exporter.parse(meshRef.current, (gltf) => {
-        const blob = new Blob([JSON.stringify(gltf)], { type: 'application/octet-stream' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'painted_model.gltf';
-        document.body.appendChild(a);
-        a.click();
-        URL.revokeObjectURL(url);
-      }, { binary: false }); // Ensure binary is set appropriately
-    };
+
+// src/components/ModelViewer/ModelViewer.js
+
+const exportModel = (filePath) => {
+  console.log("exportModel called with path:", filePath);
+  const exporter = new GLTFExporter();
+  exporter.parse(meshRef.current, async (gltf) => {
+    const data = JSON.stringify(gltf);
+    await window.electron.saveFile(filePath, data);
+  });
+};
+
+
+    
     
 return geometry && geometry.boundingSphere ? (
   <>

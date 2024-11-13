@@ -3,7 +3,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  color: '#1E3A8A',   // Default color (e.g., Dark Blue)
+  color: '#FFFFFF',   // Default color
   metalness: 0.5,     // Default metalness
   roughness: 0.5,     // Default roughness
 };
