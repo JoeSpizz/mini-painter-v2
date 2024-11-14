@@ -21,6 +21,7 @@ function createMainWindow() {
   });
 }
 
+
 app.on('ready', createMainWindow);
 
 ipcMain.handle('get-save-filename', async () => {
