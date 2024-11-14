@@ -1,20 +1,20 @@
 // src/components/ColorPicker/ColorPicker.js
 
 import React from 'react';
-import { SketchPicker } from 'react-color';
+// import { SketchPicker } from 'react-color';
 import { useSelector, useDispatch } from 'react-redux';
-import { setColor, setMetalness, setRoughness } from '../../redux/materialSlice';
+import { setMetalness, setRoughness } from '../../redux/materialSlice';
 
 function ColorPicker() {
   const dispatch = useDispatch();
   
   // Access material properties from Redux
-  const { color, metalness, roughness } = useSelector((state) => state.material);
+  const { metalness, roughness } = useSelector((state) => state.material);
 
   // Handlers to dispatch actions to Redux
-  const handleColorChange = (selectedColor) => {
-    dispatch(setColor(selectedColor.hex));
-  };
+ // const handleColorChange = (selectedColor) => {
+ //   dispatch(setColor(selectedColor.hex));
+ // };
 
   const handleMetalnessChange = (e) => {
     dispatch(setMetalness(parseFloat(e.target.value)));
@@ -26,15 +26,15 @@ function ColorPicker() {
 
   return (
     <div className="flex flex-col items-center text-center color-picker p-4 bg-white rounded shadow-md">
-      <h2 className="text-xl font-semibold mb-2">Select Model Properties</h2>
-      {/* Color Picker */}
+     
+      {/* Color Picker 
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Color</label>
         <SketchPicker 
           color={color} // Controlled component
           onChangeComplete={handleColorChange} 
         />
-      </div>
+      </div>*/}
       
       {/* Metalness Slider */}
       <div className="mb-4">

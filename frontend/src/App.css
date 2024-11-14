@@ -7,6 +7,15 @@
   pointer-events: none;
 }
 
+.paint-cursor {
+  cursor: crosshair;
+}
+
+/* Move mode cursor - change to a grab style */
+.move-cursor {
+  cursor: grab;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
