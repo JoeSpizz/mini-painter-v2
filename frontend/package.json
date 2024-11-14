@@ -1,9 +1,9 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "private": true,
   "description": "Mini Painting App - A React and Electron-based painting application.",
-  "author": "Your Name <your.email@example.com>",
+  "author": "Joe Spizz spizjo01@gmail.com",
   "main": "main.js",
   "homepage": "./", 
   "scripts": {
@@ -13,7 +13,8 @@
     "eject": "craco eject",
     "electron-start": "ELECTRON_START_URL=http://localhost:3000 electron .",
     "electron-dev": "NODE_ENV=development ELECTRON_START_URL=http://localhost:3000 wait-on http://localhost:3000 && npm run electron-start",
-    "electron-pack": "npm run build && electron-builder"
+    "electron-pack": "npm run build && electron-builder",
+     "electron-pack-win": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "@csstools/normalize.css": "^12.1.1",
@@ -89,7 +90,8 @@
       "target": "dmg"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "assets/images/mini_painter.png"
     }
   }
 }

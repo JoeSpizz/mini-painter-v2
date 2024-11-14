@@ -5,6 +5,7 @@ const path = require('path');
 
 function createMainWindow() {
   const mainWindow = new BrowserWindow({
+    icon: path.join(__dirname, './assets/images/mini_painter.png'),
     width: 1280,
     height: 720,
     webPreferences: {
